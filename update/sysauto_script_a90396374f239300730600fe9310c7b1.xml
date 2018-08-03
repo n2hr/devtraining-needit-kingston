@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sysauto_script">
+    <sysauto_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <condition/>
+        <conditional>false</conditional>
+        <name>dev-aggregate-query</name>
+        <run_as display_value="System Administrator">6816f79cc0a8016401c5a33be04be441</run_as>
+        <run_as_tz/>
+        <run_dayofmonth>1</run_dayofmonth>
+        <run_dayofweek>1</run_dayofweek>
+        <run_period/>
+        <run_start>2018-08-03 00:24:19</run_start>
+        <run_time>1970-01-01 08:00:00</run_time>
+        <run_type>on_demand</run_type>
+        <script><![CDATA[var logMessage = "DEBUG - MS - ";
+var types = ["","AIX","HP/UX","Linux Red Hat","OS/400","Solaris","Windows 2000","Windows 2000 Server","Windows 2003 Standard","Windows XP"];
+
+var start = new GlideDateTime();
+
+for (var i=0; i<types.length; i++)
+{
+	var gr = new GlideRecord("cmdb_ci_server");
+	var count = 0;
+	gr.addQuery("os",types[i]);
+	gr.query();
+	while (gr.next())
+	{
+		count++;
+	}
+	logMessage += types[i] + ", count: " + count + "\n";
+}
+	
+var end = new GlideDateTime();
+
+logMessage += "time (ms): " + (end.getNumericValue() - start.getNumericValue());
+logMessage += "\n\n";
+
+// aggregate
+start = new GlideDateTime();
+var grAg = new GlideAggregate("cmdb_ci_server");
+grAg.addAggregate("COUNT", "os");
+grAg.query();
+
+while (grAg.next()) {
+	var os = grAg.os;
+	var osCount = grAg.getAggregate('COUNT', 'os');
+	logMessage += os + ", count: " + osCount + "\n";
+}
+end = new GlideDateTime();
+logMessage += "time (ms): " + (end.getNumericValue() - start.getNumericValue());
+
+logMessage += "\n\n";
+
+// aggregate 2 
+start = new GlideDateTime();
+var grAg2 = new GlideAggregate("cmdb_ci_server");
+grAg2.addAggregate("COUNT", "vendor");
+grAg2.groupBy("os");
+grAg2.groupBy("vendor");
+grAg2.query();
+
+while (grAg2.next()) {
+	var vendor = grAg2.vendor.getDisplayValue();
+	var os = grAg2.os;
+	var vendorCount = grAg2.getAggregate('COUNT', 'vendor');
+	logMessage += vendor + ", " + os + ", count: " + vendorCount + "\n";
+}
+end = new GlideDateTime();
+logMessage += "time (ms): " + (end.getNumericValue() - start.getNumericValue());
+
+//logMessage += "\n\n" + addRandomServers();
+
+gs.info(logMessage);
+
+function addRandomServers()
+{
+	var allServers = new GlideRecord("cmdb_ci_server");
+	allServers.query();
+	var logM = "";
+	
+	while (allServers.next())
+	{
+		var numServers = getRandomInt(1,11);
+		
+		for (var i=0; i<numServers; i++)
+		{
+			var newServer = new GlideRecord("cmdb_ci_server");
+			newServer.initialize();
+		
+			for (var thing in allServers)
+			{
+				if (thing != "sys_id")
+				{
+					if (thing == "name")
+					{
+						newServer[thing] = allServers[thing] + i;
+					}
+					else
+					{
+						newServer[thing] = allServers[thing];
+					}
+				}
+				//logM += "thing: " + thing + ", allServers[" + thing + "]: " + allServers[thing] + "\n";
+			}
+			logM += "New record: " + newServer.insert() + "\n";
+		}
+	}
+	
+	return logM;
+}
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+}]]></script>
+        <sys_class_name>sysauto_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-08-03 00:32:30</sys_created_on>
+        <sys_id>a90396374f239300730600fe9310c7b1</sys_id>
+        <sys_mod_count>22</sys_mod_count>
+        <sys_name>dev-aggregate-query</sys_name>
+        <sys_package display_value="NeedIt" source="x_58872_needit">6ead8e780f603200cd674f8ce1050ed1</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="NeedIt">6ead8e780f603200cd674f8ce1050ed1</sys_scope>
+        <sys_update_name>sysauto_script_a90396374f239300730600fe9310c7b1</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-08-03 03:58:53</sys_updated_on>
+        <upgrade_safe>false</upgrade_safe>
+    </sysauto_script>
+</record_update>
